@@ -1,4 +1,5 @@
 import xapi.storage.api.volume
+from xapi.storage import log
 import XenAPI
 
 
@@ -15,6 +16,7 @@ def get_online_host_refs(dbg, session):
 
 
 def call_plugin_in_pool(dbg, plugin_name, plugin_function, args):
+    log.debug("%s: calling plugin '%s' function '%s' with args %s in pool" % (dbg, plugin_name, plugin_function, args))
     session = XenAPI.xapi_local()
     try:
         session.xenapi.login_with_password('root', '')
@@ -23,11 +25,13 @@ def call_plugin_in_pool(dbg, plugin_name, plugin_function, args):
         raise
     try:
         for host_ref in get_online_host_refs(dbg, session):
+            log.debug("%s: calling plugin '%s' function '%s' with args %s on host %s" % (dbg, plugin_name, plugin_function, args, host_ref))
             resulttext = session.xenapi.host.call_plugin(
                 host_ref,
                 plugin_name,
                 plugin_function,
                 args)
+            log.debug("%s: resulttext = %s" % (dbg, resulttext))
             if resulttext != "True":
                 # ToDo: We ought to raise something else
                 raise xapi.storage.api.volume.Unimplemented(
